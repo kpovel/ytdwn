@@ -1,15 +1,10 @@
 # ytdwn
 
-To install dependencies:
+a tiny self-hosted web ui that downloads videos using [`yt-dlp`](https://github.com/yt-dlp/yt-dlp).
 
-```bash
-bun install
-```
+you paste a video url, hit download, and the server streams `yt-dlp`'s output back to your browser as a file download.
 
-To run:
+## requirements
 
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.4. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+- **bun**: runtime for the server
+- **yt-dlp**: must be on `PATH` for the server process
