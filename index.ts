@@ -225,7 +225,7 @@ const pageHtml = `<!doctype html>
           </div>
 
           <p class="hint">
-            paste a link, press <span class="kbd">enter</span>, and we’ll do the rest.
+            paste a link, press <span class="kbd">enter</span>, and we'll do the rest.
           </p>
 
           <div class="status" id="status" aria-live="polite"></div>
@@ -244,7 +244,7 @@ const pageHtml = `<!doctype html>
       const statusEl = document.getElementById("status");
       const btn = document.getElementById("submitBtn");
 
-      const show = (kind, msg) => {
+      function show(kind, msg) {
         statusEl.dataset.kind = kind;
         statusEl.textContent = msg;
         statusEl.style.display = "block";
@@ -260,10 +260,8 @@ const pageHtml = `<!doctype html>
         btn.textContent = "starting…";
 
         try {
-          const res = await fetch("/download", {
+          const res = await fetch("/download/" + url, {
             method: "post",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ url }),
           });
 
           const text = await res.text();
