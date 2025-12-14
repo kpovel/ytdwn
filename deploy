@@ -6,8 +6,9 @@ echo "Building ytdwn..."
 bun build index.ts --compile --target=bun-linux-arm64 --outfile ytdwn
 
 echo "Deploying to pi@pi.local..."
+ssh pi@pi.local "sudo systemctl stop ytdwn"
 scp ytdwn pi@pi.local:~
-ssh pi@pi.local "sudo systemctl restart ytdwn"
+ssh pi@pi.local "sudo systemctl start ytdwn"
 
 rm ytdwn
 
