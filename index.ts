@@ -1,5 +1,3 @@
-import { $ } from "bun";
-
 const pageHtml = `<!doctype html>
 <html lang="en">
   <head>
@@ -257,19 +255,33 @@ const pageHtml = `<!doctype html>
         if (!url) return;
 
         btn.disabled = true;
-        btn.textContent = "starting…";
+        btn.textContent = "downloading…";
 
         try {
-          const res = await fetch("/download/" + url, {
+          const res = await fetch("/download/" + encodeURIComponent(url), {
             method: "post",
           });
 
-          const text = await res.text();
           if (!res.ok) {
+            const text = await res.text();
             show("err", text || "failed");
-          } else {
-            show("ok", text || "queued");
+            return;
           }
+
+          const disposition = res.headers.get("Content-Disposition");
+          let filename = "video.mp4";
+          if (disposition) {
+            const match = disposition.match(/filename="(.+)"/);
+            if (match) filename = match[1];
+          }
+
+          const blob = await res.blob();
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(a.href);
+          show("ok", "download complete!");
         } catch {
           show("err", "network error");
         } finally {
@@ -301,11 +313,53 @@ Bun.serve({
       }),
     "/download/:url": {
       POST: async (req) => {
-        const url = req.params.url;
-        $`echo ${url}`;
-        // yt-dlp this bad boy and send it to the client
+        const videoUrl = req.params.url;
 
-        return new Response(`downloading`);
+        try {
+          const filenameProc = Bun.spawn(
+            [
+              "yt-dlp",
+              "--print",
+              "filename",
+              "-o",
+              "%(title)s.%(ext)s",
+              videoUrl,
+            ],
+            { stdout: "pipe", stderr: "pipe" },
+          );
+          const filename = (
+            await new Response(filenameProc.stdout).text()
+          ).trim();
+
+          const safeFilename = filename
+            .replace(/[^\x20-\x7E]/g, "_")
+            .replace(/["\\]/g, "_");
+
+          console.log(filename);
+          const exitCode = await filenameProc.exited;
+
+          if (exitCode !== 0 || !filename) {
+            const err = await new Response(filenameProc.stderr).text();
+            return new Response(err || "failed to get video info", {
+              status: 400,
+            });
+          }
+
+          const downloadProc = Bun.spawn(["yt-dlp", "-o", "-", videoUrl], {
+            stdout: "pipe",
+            stderr: "pipe",
+          });
+
+          console.log(safeFilename);
+          return new Response(downloadProc.stdout, {
+            headers: {
+              "Content-Type": "application/octet-stream",
+              "Content-Disposition": `attachment; filename="${safeFilename}"`,
+            },
+          });
+        } catch (e) {
+          return new Response(`download failed: ${e}`, { status: 500 });
+        }
       },
     },
   },
