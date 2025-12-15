@@ -53,6 +53,42 @@ const pageHtml = `<!doctype html>
         padding: 48px 16px;
       }
 
+      .wrap.split {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: stretch;
+        place-items: stretch;
+      }
+
+      @media (max-width: 768px) {
+        .wrap.split {
+          grid-template-columns: 1fr;
+          grid-template-rows: 1fr 1fr;
+        }
+      }
+
+      .brainrot-container {
+        display: none;
+        border: 1px solid var(--cardBorder);
+        background: var(--card);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+        padding: 22px;
+        overflow: hidden;
+      }
+
+      .wrap.split .brainrot-container {
+        display: block;
+      }
+
+      .brainrot-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 12px;
+      }
+
       .card {
         width: min(760px, 100%);
         border: 1px solid var(--cardBorder);
@@ -195,7 +231,7 @@ const pageHtml = `<!doctype html>
     </style>
   </head>
   <body>
-    <div class="wrap">
+    <div class="wrap" id="wrap">
       <main class="card">
         <div class="top">
           <div class="brand">
@@ -234,6 +270,15 @@ const pageHtml = `<!doctype html>
           </div>
         </form>
       </main>
+
+      <div class="brainrot-container">
+        <iframe
+          id="brainrotVideo"
+          src="https://www.youtube.com/embed/eRXE8Aebp7s?autoplay=1&loop=1&playlist=eRXE8Aebp7s"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        ></iframe>
+      </div>
     </div>
 
     <script>
@@ -241,12 +286,25 @@ const pageHtml = `<!doctype html>
       const urlEl = document.getElementById("url");
       const statusEl = document.getElementById("status");
       const btn = document.getElementById("submitBtn");
+      const wrap = document.getElementById("wrap");
+      const brainrotVideo = document.getElementById("brainrotVideo");
+      const videoSrc = "https://www.youtube.com/embed/eRXE8Aebp7s?autoplay=1&loop=1&playlist=eRXE8Aebp7s";
 
       function show(kind, msg) {
         statusEl.dataset.kind = kind;
         statusEl.textContent = msg;
         statusEl.style.display = "block";
       };
+
+      function updateSplitView() {
+        if (btn.disabled) {
+          wrap.classList.add("split");
+          brainrotVideo.src = videoSrc;
+        } else {
+          wrap.classList.remove("split");
+          brainrotVideo.src = "about:blank";
+        }
+      }
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -256,6 +314,7 @@ const pageHtml = `<!doctype html>
 
         btn.disabled = true;
         btn.textContent = "downloading…";
+        updateSplitView();
 
         try {
           const res = await fetch("/download/" + encodeURIComponent(url), {
@@ -287,6 +346,7 @@ const pageHtml = `<!doctype html>
         } finally {
           btn.disabled = false;
           btn.textContent = "download";
+          updateSplitView();
         }
       });
 
