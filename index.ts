@@ -395,7 +395,6 @@ Bun.serve({
             .replace(/[^\x20-\x7E]/g, "_")
             .replace(/["\\]/g, "_");
 
-          console.log(filename);
           const exitCode = await filenameProc.exited;
 
           if (exitCode !== 0 || !filename) {
@@ -410,7 +409,6 @@ Bun.serve({
             stderr: "pipe",
           });
 
-          console.log(safeFilename);
           return new Response(downloadProc.stdout, {
             headers: {
               "Content-Type": "application/octet-stream",
